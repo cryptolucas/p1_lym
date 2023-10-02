@@ -70,8 +70,16 @@ TOKEN: /* Nombres de Comandos */
 		|  < POP: "Pop" >
 		|  <GO: "GO" >
         |  < HOP:  "HOP" >
-        | < JUMP: "Jump" >	
-
+        | < JUMP: "Jump" >
+        | < WALK: "Walk" > 
+        | < LEAP: "Leap" >
+        | < TURN: "Turn" >
+        | < TURNTO: "Turnto" >
+        | < DROP: "Drop" >
+        | < GET: "Get" >
+        | < GRAB: "Grab" >
+        | < LETGO: "Letgo" >
+        | < NOP: "Nop" >	
 }
 
 TOKEN:
@@ -98,6 +106,10 @@ TOKEN:
 |  <  EAST: "east" >
 |  < WEST: "west" >
 |  < SOUTH: "south" >
+| < FRONT: "front" >
+| < BACK: "back" >
+| < LEFT: "left" >
+| < AROUND: "around" >
 }
 
 TOKEN:
@@ -145,6 +157,15 @@ TOKEN :
 		|  <PICK> "(" get()  ")"	
 	    |  < POP > "(" x=num() ")" {world.popBalloons(x); salida = "Comando:  Pop";}
 	    |  <JUMP>  "(" x=num() "," y=num()")" {world.setPostion(x,y);salida = "Command: Jump ";}
+	    | <WALK> "(" walk() ")"
+	    | < LEAP > "(" leap() ")"
+	    | < TURN > "(" turn() ")"
+	    | < TURNTO > "(" turnto() ")"
+	    | < DROP > "(" x=num()")" { world.putChips(x); salida = "Command:  Drop Chips";}
+	    | < GET > "(" x=num() ")" { world.pickChips(x);salida = "Command:  Get chips";}
+	    | < GRAB > "(" x=num() ")" { world.grabBalloons(x);salida="Command:  Grab balloons"; }
+	    | < LETGO > "(" x=num() ")" { world.putBalloons(x); salida = "Command:  Put Balloons";}
+	    | < NOP >"("")"
 	    | Can()
 		|  createVariable()
 		| Facing()
@@ -170,10 +191,186 @@ TOKEN :
 	}
 
 
+	void walk() :
+	{
+		int f=1;
+		String c = null;
+		String coordenada = null;	
+	}
+	{
+		( f=num()| f=CallVariable()) {world.moveForward(f,false);salida = "Command: Walk ";}
+		|( f=num()| f=CallVariable())"," c=direction()
+		{ 
+			System.out.println(c);
+			System.out.println(f);
+		if (world.facingNorth() == true)
+	  	coordenada = "north";
+	  	else if (world.facingSouth() == true)
+	  	coordenada = "south";
+	  	else if (world.facingWest() == true)
+	  	coordenada = "west";
+	  	else if (world.facingEast() == true)
+	  	coordenada = "east";
 
+		System.out.println(coordenada);
+		
+	  	while (!(c.equals(coordenada))) {
+	  	world.turnRight();
+	  	if (world.facingNorth() == true)
+	  	coordenada = "north";
+	  	else if (world.facingSouth() == true)
+	  	coordenada = "south";
+	  	else if (world.facingWest() == true)
+	  	coordenada = "west";
+	  	else if (world.facingEast() == true)
+	  	coordenada = "east";
+	 	}
+		world.moveForward(f,false);salida = "Command: Walk ";
+		}
+		|( f=num()| f=CallVariable())"," c=direction()
+		{
+		if (c.equals("front")) {
+		   world.moveForward(f,false);salida = "Command: Walk ";
+		}
+		else if (c.equals("right")) {
+		  world.turnRight();
+		  world.moveForward(f,false);salida = "Command: Walk ";
+		  for (int i = 0; i < 3; i++) {
+		    world.turnRight();
+		  } }
+		 else if (c.equals("back")) {
+		  for (int i = 0; i < 2; i++) {
+		    world.turnRight();
+		  }
+		  world.moveForward(f,false);salida = "Command: Walk ";
+		  for (int i = 0; i < 2; i++) {
+		    world.turnRight();
+		  }
+		}
+		else if (c.equals("left")) {
+		  for (int i = 0; i < 3; i++) {
+		    world.turnRight();
+		  }
+		  world.moveForward(f,false);
+		  world.turnRight();salida = "Command: Walk ";
+		  
+		}
+		
+		} 
+		}
 
+	void leap() :
+	{
+		int f=1;
+		String c = null;
+		String coordenada = null;	
+	}
+	{
+		( f=num()| f=CallVariable()) {world.moveForward(f,true);salida = "Command: Leap ";}
+		|(( f=num()| f=CallVariable())"," c=direction())
+		{
+		  if (world.facingNorth() == true)
+	  	coordenada = "north";
+	  	else if (world.facingSouth() == true)
+	  	coordenada = "south";
+	  	else if (world.facingWest() == true)
+	  	coordenada = "west";
+	  	else if (world.facingEast() == true)
+	  	coordenada = "east";
+
+	  	while (c != coordenada) {
+	  	world.turnRight();
+	 }
+		world.moveForward(f,true);salida = "Command: Leap ";
+		}
+		|(( f=num()| f=CallVariable())"," c=direction())
+		{
+		if (c == "front") {
+		   world.moveForward(f,true);salida = "Command: Leap ";
+		}
+		else if (c=="right") {
+		  world.turnRight();
+		  world.moveForward(f,true);salida = "Command: Leap ";
+		  for (int i = 0; i < 3; i++) {
+		    world.turnRight();
+		  } }
+		 else if (c=="back") {
+		  for (int i = 0; i < 2; i++) {
+		    world.turnRight();
+		  }
+		  world.moveForward(f,true);salida = "Command: Leap ";
+		  for (int i = 0; i < 2; i++) {
+		    world.turnRight();
+		  }
+		}
+		else if (c=="left") {
+		  for (int i = 0; i < 3; i++) {
+		    world.turnRight();
+		  }
+		  world.moveForward(f,true);salida = "Command: Leap ";
+		  world.turnRight();
+		  
+		}
+		
+		} 
+		}
 	
+	void turn() :
+	{
+	  String dir = null;
+	}
+	{
+	  dir=direction()
+	  
+	  {
+	    if (dir.equals("right")) { 
+	    world.turnRight(); salida = "Command: Turn "; }
+	    else if (dir.equals("left")) {
+	      for (int i = 0; i < 3; i++) {
+		    world.turnRight(); }
+		    salida = "Command: Turn "; 
+		}
+		else if (dir.equals("around")) {
+	      for (int i = 0; i < 2; i++) {
+		    world.turnRight(); }
+		    salida = "Command: Turn ";
+		}
+	  }
+	}
 
+	void turnto() :
+	{
+	  String dir = null;
+	  String coordenada = null;
+	}
+	{
+	  dir=direction()
+	  
+	  {
+	    if (world.facingNorth() == true)
+	  	coordenada = "north";
+	  	else if (world.facingSouth() == true)
+	  	coordenada = "south";
+	  	else if (world.facingWest() == true)
+	  	coordenada = "west";
+	  	else if (world.facingEast() == true)
+	  	coordenada = "east";
+
+	  	while (!dir.equals(coordenada)) {
+	  	  world.turnRight();
+	  	  if (world.facingNorth() == true)
+	  		coordenada = "north";
+	  	  else if (world.facingSouth() == true)
+	  		coordenada = "south";
+	  	  else if (world.facingWest() == true)
+	  		coordenada = "west";
+	  	  else if (world.facingEast() == true)
+	  		coordenada = "east";
+	  	}
+		salida = "Command: Turn to ";
+		
+	  }
+	}
 
 
 
@@ -373,7 +570,7 @@ TOKEN :
 	void CreateDefprocSinParam():
 	{
 
-	  Arraylist
+	  //Arraylist
 	  String name;
 	  int x,y;
 	  ArrayList<ArrayList<String>> j;
@@ -431,7 +628,7 @@ TOKEN :
 
 	String direction(): { }
 	{
-		(< NORTH >| < EAST >| < WEST >|< SOUTH >)
+		(< NORTH >| < EAST >| < WEST >|< SOUTH >|< FRONT >|< BACK >|< RIGHT >|< LEFT >|< AROUND >)
 	{
 	  
 		return token.image;
