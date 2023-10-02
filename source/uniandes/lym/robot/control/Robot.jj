@@ -33,6 +33,7 @@ import java.io.*;
 import java.util.LinkedList;
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.Queue;
 
 
 @SuppressWarnings("serial")
@@ -40,7 +41,10 @@ public class Robot
 {
 
 	private static HashMap<String, Integer> variables = new HashMap<>();
-	private static ArrayList<String> defprocs = new ArrayList<>(); 
+	private static HashMap<String, ArrayList<ArrayList<String>>> defprocs = new HashMap<>();
+	private static HashMap< String , ArrayList<ArrayList<String>>> defprocsConParam = new HashMap<>();
+	//private static Queue<Integer[]> colaDefprocs = new LinkedList<>();
+	
 	private RobotWorldDec world;
 	
 	
@@ -316,15 +320,21 @@ TOKEN :
 	{
 		boolean x;
 		ArrayList<ArrayList<String>> i, j;
-		
+		String not = null;
+		ArrayList<String> nots = new ArrayList<>();
 	}
 	
 	{
- 	 	< IF > (x=Facing()|x=Can()) "{" i = ArrayBlock() "}" < ELSE >  "{" j = ArrayBlock() "}"
+ 	 	< IF > (not=NOT())* (x=Facing()|x=Can()) "{" i = ArrayBlock() "}" < ELSE >  "{" j = ArrayBlock() "}"
 	{
-  		if (x == true) { 
+	  	nots.add(not);
+  		if (x == true && nots.size() == 0) { 
   			RunBlock(i);
   			 return;}
+
+  		else if (x==true && nots.size() == 1) { 
+  				RunBlock(j);
+  				return; }
   			 
   		else { 
   			RunBlock(j);
@@ -332,6 +342,13 @@ TOKEN :
   			
  	}
 
+	}
+
+	String NOT():
+	{}
+	{
+	  < NOT >
+	  { return token.image; }
 	}
 
 	
@@ -373,17 +390,149 @@ TOKEN :
 	void CreateDefprocSinParam():
 	{
 
-	  Arraylist
 	  String name;
-	  int x,y;
 	  ArrayList<ArrayList<String>> j;
 	}
 	{
 		< DEFPROC > name = name() "(" ")"   "{" j=ArrayBlock() "}"
 
-		
+		{defprocs.put(name, j); }
+		  
 		
 	}
+
+
+	void CallDefprocSinParam():
+	{
+		String key;
+	}
+	{
+		key = name() "("  ")"  ";"
+		{
+		  if (defprocs.containsKey(key) == false) 
+		    throw new ParseException ("No se ha declarado el procedimiento...");
+		    
+         
+		  else
+		     
+		   RunBlock(defprocs.get(key));
+		
+		  
+		}
+	  
+	}
+	
+
+
+	void CreateDefprocConParam():
+	{
+		String name;
+		String x,y;
+		ArrayList<ArrayList<String>> j;
+	}
+	{
+	  < DEFPROC > name = name() "(" x=name() y=name() "{" j=ArrayBlockDefproc() "}"
+	  {
+			
+			defprocsConParam.put(name, j);
+	  }
+	  
+
+	}
+
+
+	void CallDefprocConParam():
+	{
+	  String key;
+	  int a,b;
+	}
+	{
+	 	key = name() "(" a=num() b=num() ")" ";"
+	{
+	  
+	 	if (defprocsConParam.containsKey(key) == true) {
+	 	  
+			ArrayList<ArrayList<String>> bloque = defprocsConParam.get(key);
+			for (ArrayList<String> arr: bloque) {
+			  
+				if(arr.size() == 2) { 
+					if (arr.get(1) instanceof String) { 
+						String a1 = Integer.toString(a);
+						arr.set(1, a1); }
+							
+					 				}
+					 
+				if(arr.size() == 3) {
+
+				  if (arr.get(1) instanceof String && arr.get(2) instanceof String) { 
+						String a1 = Integer.toString(a);
+						String b1 = Integer.toString(b);
+						arr.set(1, a1);
+						arr.set(2, b1); }
+				
+									}
+
+
+	 				}
+	 				
+	 			RunBlock(bloque);
+			}
+		
+	}  
+	}
+
+
+
+	ArrayList<String> ArrayComandoDefproc():
+	{
+  	ArrayList<String> comando = new ArrayList<>();
+  	String z;
+  	String x,y;
+	}
+	{
+  		(z = TokensCommand() "("  x = name() ")" ";")
+  	{
+
+    	comando.add(z);
+    	comando.add(x);
+    	
+  	}
+  		| (z = TokensCommand() "(" x = name() "," y = name() ")" ";")
+  	{
+    	 if (comando.isEmpty()) {
+            // Si está vacío, entonces seleccionamos la segunda alternativa
+         
+            comando.add(z);
+            comando.add(x);
+            comando.add(y);
+        }
+    	
+  	}
+
+ 	{ System.out.println(comando); return comando; }
+  
+}
+
+
+	ArrayList<ArrayList<String>> ArrayBlockDefproc():
+	{
+		ArrayList<ArrayList<String>> lista_mayor = new ArrayList<>();
+		ArrayList<String> comando = new ArrayList<>();
+	}
+	{
+		(comando = ArrayComandoDefproc()| comando = ArrayComando())+ { lista_mayor.add(comando); }
+
+		{return lista_mayor; }
+		  
+	}
+
+
+	
+	
+
+
+	
+
 
 
 	
